@@ -11,7 +11,7 @@ def mWelcome():
 	os.system("clear")
 	print("Welcome to Security Patch Merge Helper or SPMH for short!")
 	print("Made by: HyperN00B")
-	time.sleep(3)
+	time.sleep(4)
 	os.system("clear")
 pass
 
@@ -84,7 +84,7 @@ def mGetManifestXmls(miSourceRootPath):
 		for i,item in enumerate(mvManifestFolderContent):
 			if os.path.isdir(item) and not item==".git":
 				mvSubFolders.append(item)
-			elif os.path.isfile(item) and item.endswith(".xml"):
+			elif os.path.isfile(item) and item.endswith(".xml") and item!="default.xml":
 				mvFilesFound.append(item)
 			pass
 		pass
@@ -116,15 +116,26 @@ def mListAndSelectXml(miFoundXmls):
 	pass
 	mvChosenXml=input("Your choice:")
 	if str(int(mvChosenXml)-1) in mvIdAndFiles:
-		return mvIdAndFiles[int(mvChosenXml)][int(mvChosenXml)-1]
+		return mvIdAndFiles[1][int(mvChosenXml)-1]
 	else:
 		os.system("clear")
-		print("I don't think that's a valid option.")
+		print("Sorry but \""+mvChosenXml+"\" is not a valid option")
 		time.sleep(3)
 		mListAndSelectXml(miFoundXmls)
 	pass
 pass
 
+def mReadReposFromManifest(miRequestedManifestFile):
+	mrReposRead=[]
+	mvOpenedXml=open(miRequestedManifestFile,"r")
+	mvOpenedXmlLines=mvOpenedXml.readlines()
+	for i,item in enumerate(mvOpenedXmlLines):
+		if "project" in item and "name=" in item:
+			mrReposRead.append(item)
+		pass
+	pass
+	return mrReposRead
+pass
 
 #def mReadReposFromManifest(miRequestedManifestFile):
 
@@ -134,3 +145,4 @@ mWelcome()
 vSourceRootFound=mPreviousRootCheck()
 vAvailableXmlFiles=mGetManifestXmls(vSourceRootFound)
 vSelectedXml=mListAndSelectXml(vAvailableXmlFiles)
+vReposInList=mReadReposFromManifest(vSelectedXml)
