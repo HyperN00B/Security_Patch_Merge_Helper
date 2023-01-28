@@ -3,7 +3,7 @@
 # Requirements:
 - An Android Custom ROM source code (Pure AOSP won't work)
 - A Linux distro
-- git
+- git >= 2.15
 
 # Description:
 This is a helper script made by me for Android Custom ROMs

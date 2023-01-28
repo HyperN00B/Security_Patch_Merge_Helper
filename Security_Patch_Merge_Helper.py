@@ -249,23 +249,45 @@ def mFetchRepos(miReposList):
 		else:
 			os.chdir(item)
 		pass
-		mvFetchState=str(subprocess.run("git remote",shell=True,capture_output=True))
+		mvFetchState=str(subprocess.check_output("git remote",shell=True)).split("\\n")
+		mvFetchState[0]=mvFetchState[0][2:]
 		if "AOSP" in mvFetchState:
-			if not "https://android.googlesource.com/platform/"+item in str(subprocess.check_output("git remote get-url AOSP",shell=True)):
-				subprocess.run("git remote set-url AOSP https://android.googlesource.com/platform/"+item+" && git fetch AOSP",shell=True,capture_output=True)
-				print("Updated remote: \"AOSP\" in "+item)
+			for j,jtem in enumerate(mvFetchState):
+				if jtem=="AOSP":
+					if not str(subprocess.check_output("git remote get-url AOSP",shell=True))[2:-3]=="https://android.googlesource.com/platform/"+item:
+						subprocess.run("git remote set-url AOSP https://android.googlesource.com/platform/"+item+" && git fetch AOSP",shell=True,capture_output=True)
+						print("Updated remote: \"AOSP\" in "+item)
+					else:
+						subprocess.run("git fetch AOSP",shell=True,capture_output=True)
+						print("Fetched: "+item)
+					pass
+				pass
 			pass
+		else:
+			subprocess.run("git remote add AOSP https://android.googlesource.com/platform/"+item+" && git fetch AOSP",shell=True,capture_output=True)
+			print("Added remote: \"AOSP\" to "+item)
 		pass
 	pass
 	for i,item in enumerate(mvNonPlatformRepos):
 		os.chdir(vSourceRootFound)
 		os.chdir(item)
-		mvFetchState=str(subprocess.run("git remote",shell=True,capture_output=True))
+		mvFetchState=str(subprocess.check_output("git remote",shell=True)).split("\\n")
+		mvFetchState[0]=mvFetchState[0][2:]
 		if "AOSP" in mvFetchState:
-			if not "https://android.googlesource.com/"+item in str(subprocess.check_output("git remote get-url AOSP",shell=True)):
-				subprocess.run("git remote set-url AOSP https://android.googlesource.com/"+item+" && git fetch AOSP",shell=True,capture_output=True)
-				print("Updated remote: \"AOSP\" in "+item)
+			for j,jtem in enumerate(mvFetchState):
+				if jtem=="AOSP":
+					if not str(subprocess.check_output("git remote get-url AOSP",shell=True))[2:-3]=="https://android.googlesource.com/"+item:
+						subprocess.run("git remote set-url AOSP https://android.googlesource.com/"+item+" && git fetch AOSP",shell=True,capture_output=True)
+						print("Updated remote: \"AOSP\" in "+item)
+					else:
+						subprocess.run("git fetch AOSP",shell=True,capture_output=True)
+						print("Fetched: "+item)
+					pass
+				pass
 			pass
+		else:
+			subprocess.run("git remote add AOSP https://android.googlesource.com/"+item+" && git fetch AOSP",shell=True,capture_output=True)
+			print("Added remote: \"AOSP\" to "+item)
 		pass
 	pass
 pass
