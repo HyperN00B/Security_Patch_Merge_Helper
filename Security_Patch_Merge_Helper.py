@@ -50,9 +50,13 @@ pass
 
 def mPreviousRootCheck():
 	os.system("clear")
-	mvPreviousPathContainer=open("PreviousSourceRoot.txt","r")
-	mvPreviousPathContainerContent=mvPreviousPathContainer.readlines()
-	if os.path.exists("PreviousSourceRoot.txt") and len(mvPreviousPathContainerContent)!=0 \
+	if os.path.exists("PreviousSourceRoot.txt"):
+		mvPreviousPathContainer=open("PreviousSourceRoot.txt","r")
+		mvPreviousPathContainerContent=mvPreviousPathContainer.readlines()
+	else:
+		mrNewPath=mGetSourceRoot()
+		return mrNewPath
+	if len(mvPreviousPathContainerContent)!=0 \
 	and os.path.isdir(mvPreviousPathContainerContent[0]) \
 	and "build" in os.listdir(mvPreviousPathContainerContent[0]) \
 	and "vendor" in os.listdir(mvPreviousPathContainerContent[0]):
@@ -146,6 +150,7 @@ pass
 def mFormatReposList(miRawReposList):
 	mvListItemsSplit=[]
 	mrPathsList=[]
+	mrRemotesList=[]
 	for i,item in enumerate(miRawReposList):
 		mvListItemsSplit.append(item.split(" "))
 	pass
@@ -156,7 +161,6 @@ def mFormatReposList(miRawReposList):
 			pass
 		pass
 	pass
-	mvIndexOfBuildMake=mrPathsList.index("build/make")
 	for i,item in enumerate(mrPathsList):
 		if item=="build/make":
 			mrPathsList[i]="build"
@@ -204,7 +208,9 @@ def mGetAvailableTags():
 	if "manifest" in os.listdir(vPathForScript):
 		os.chdir(vPathForScript)
 		shutil.rmtree("manifest")
-	subprocess.run("git clone https://android.googlesource.com/platform/manifest "+vPathForScript+"/manifest",shell=True,capture_output=True)
+	else:
+		os.chdir(vPathForScript)
+	subprocess.run("git clone https://android.googlesource.com/platform/manifest manifest",shell=True,capture_output=True)
 	os.chdir("manifest")
 	mrAvailableTagsStr=str(subprocess.check_output("git tag -l | grep android-"+vOSVersionFound,shell=True))
 	mrAvailableTagsLst=mrAvailableTagsStr.split("\\n")
@@ -213,8 +219,27 @@ def mGetAvailableTags():
 	return mrAvailableTagsLst
 pass
 
+def mFixShallowness(miReposList):
+	mvExistingRepos=miReposList[1]+miReposList[2]
+	for i,item in enumerate(mvExistingRepos):
+		os.chdir(vSourceRootFound)
+		if item=="build":
+			os.chdir("build/make")
+		else:
+			os.chdir(item)
+		pass
+		if "true" in str(subprocess.check_output("git rev-parse --is-shallow-repository",shell=True)):
+			print(item+" is a shallow repo. Let me fix it for you!")
+			mvOriginData=str(subprocess.check_output("git branch -r",shell=True)).split(" -> ")
+			mvOriginRemote=str(mvOriginData[1]).split("/")[0]
+			mvOriginBranch=str(mvOriginData[1]).split("/")[1][:-3]
+			subprocess.run("git fetch "+mvOriginRemote+" "+mvOriginBranch+" --unshallow",shell=True)
+			print("")
+		pass
+	pass
+pass
+
 def mFetchRepos(miReposList):
-	print("Fetching AOSP tags...")
 	mvPlatformRepos=miReposList[1]
 	mvNonPlatformRepos=miReposList[2]
 	for i,item in enumerate(mvPlatformRepos):
@@ -224,18 +249,23 @@ def mFetchRepos(miReposList):
 		else:
 			os.chdir(item)
 		pass
-		mvFetchState=str(subprocess.run("git remote add AOSP https://android.googlesource.com/platform/"+item+" && git fetch AOSP",shell=True,capture_output=True))
-		if "already exists" in mvFetchState:
-			subprocess.run("git remote set-url AOSP https://android.googlesource.com/platform/"+item+" && git fetch AOSP",shell=True,capture_output=True)
-			print("Updated remote: \"AOSP\" in "+item)
+		mvFetchState=str(subprocess.run("git remote",shell=True,capture_output=True))
+		if "AOSP" in mvFetchState:
+			if not "https://android.googlesource.com/platform/"+item in str(subprocess.check_output("git remote get-url AOSP",shell=True)):
+				subprocess.run("git remote set-url AOSP https://android.googlesource.com/platform/"+item+" && git fetch AOSP",shell=True,capture_output=True)
+				print("Updated remote: \"AOSP\" in "+item)
+			pass
 		pass
 	pass
 	for i,item in enumerate(mvNonPlatformRepos):
 		os.chdir(vSourceRootFound)
 		os.chdir(item)
-		mvFetchState=str(subprocess.run("git remote add AOSP https://android.googlesource.com/"+item+" && git fetch AOSP",shell=True,capture_output=True))
-		if "already exists" in mvFetchState:
-			subprocess.run("git remote set-url AOSP https://android.googlesource.com/"+item+" && git fetch AOSP",shell=True,capture_output=True)
+		mvFetchState=str(subprocess.run("git remote",shell=True,capture_output=True))
+		if "AOSP" in mvFetchState:
+			if not "https://android.googlesource.com/"+item in str(subprocess.check_output("git remote get-url AOSP",shell=True)):
+				subprocess.run("git remote set-url AOSP https://android.googlesource.com/"+item+" && git fetch AOSP",shell=True,capture_output=True)
+				print("Updated remote: \"AOSP\" in "+item)
+			pass
 		pass
 	pass
 pass
@@ -267,18 +297,6 @@ def mMergeTags(miReposList,miAvailableTags):
 	mvCompleteRepoList=miReposList[1]+miReposList[2]
 	for i,item in enumerate(mvCompleteRepoList):
 		os.chdir(vSourceRootFound)
-		if item=="build":
-			os.chdir("build/make")
-		else:
-			os.chdir(item)
-		pass
-		if mvMergableTag in str(subprocess.run("git log",shell=True,capture_output=True)):
-			mvCompleteRepoList.pop(mvCompleteRepoList.index(item))
-			mrReposAlreadyOnTag.append(item)
-		pass
-	pass
-	for i,item in enumerate(mvCompleteRepoList):
-		os.chdir(vSourceRootFound)
 		if mvCompleteRepoList[i]=="build":
 			os.chdir("build/make")
 		else:
@@ -291,7 +309,10 @@ def mMergeTags(miReposList,miAvailableTags):
 			mrDirtyRepos.append(item)
 		elif "Merge made" in mvMergeState:
 			mrMergedRepos.append(item)
+		elif "Already up to date" in mvMergeState:
+			mrReposAlreadyOnTag.append(item)
 		else:
+			print(mvMergeState)
 			print("Even god don't know what happened to "+item)
 		pass
 	pass
@@ -307,32 +328,28 @@ def mExportResults(mi404, miMerged, miConflicting, miAlready, miDirty):
 	for i,item in enumerate(miMerged):
 		mvFile.write(item+"\n")
 	pass
-	mvFile.write("")
-	mvFile.write("Conflicting:")
+	mvFile.write("\n")
+	mvFile.write("Conflicting:\n")
 	for i,item in enumerate(miConflicting):
 		mvFile.write(item+"\n")
 	pass
-	mvFile.write("")
-	mvFile.write("Already up-to-date:")
+	mvFile.write("\n")
+	mvFile.write("Already up-to-date:\n")
 	for i,item in enumerate(miAlready):
 		mvFile.write(item+"\n")
 	pass
-	mvFile.write("")
-	mvFile.write("Contains uncommitted changes:")
+	mvFile.write("\n")
+	mvFile.write("Contains uncommitted changes:\n")
 	for i,item in enumerate(miDirty):
 		mvFile.write(item+"\n")
 	pass
-	mvFile.write("")
-	mvFile.write("Not found in AOSP:")
+	mvFile.write("\n")
+	mvFile.write("Not found in AOSP:\n")
 	for i,item in enumerate(mi404):
 		mvFile.write(item+"\n")
 	pass
 	mvFile.flush()
 pass
-
-#TODO: Add a way to unshallow repos
-
-if 
 
 mWelcome()
 vSourceRootFound=mPreviousRootCheck()
@@ -342,7 +359,16 @@ vReposRawList=mReadReposFromManifest(vSelectedXml)
 vReposFormattedList=mFormatReposList(vReposRawList)
 vOSVersionFound=mDetermineOSVersion()
 vAvailableAnd404Repos=mCheckRemoteRepoState(vReposFormattedList)
+mFixShallowness(vAvailableAnd404Repos)
 vAvailableTags=mGetAvailableTags()
-mFetchRepos(vAvailableAnd404Repos)
+if not len(vAvailableAnd404Repos[1])==0:
+	mFetchRepos(vAvailableAnd404Repos)
+else:
+	print("None of the repos are available in AOSP")
+	sys.exit()
 vExportableResults=mMergeTags(vAvailableAnd404Repos,vAvailableTags)
+print("Merge Complete")
 mExportResults(vExportableResults[0],vExportableResults[1],vExportableResults[2],vExportableResults[3],vExportableResults[4])
+print("The results can be found in \"Results.txt\" at the location of this script")
+time.sleep(3)
+sys.exit()
