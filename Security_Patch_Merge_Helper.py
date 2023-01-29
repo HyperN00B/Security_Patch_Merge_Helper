@@ -80,6 +80,7 @@ def mPreviousRootCheck():
 pass
 
 def mGetManifestXmls(miSourceRootPath):
+	#TODO: Make default.xml available if the source is for LOS
 	os.system("clear")
 	if not len(miSourceRootPath)==0 and os.path.isdir(miSourceRootPath):
 		mvRepoManifestsPath=os.path.join(str(miSourceRootPath)+".repo/manifests/")
@@ -350,10 +351,12 @@ def mExportResults(mi404, miMerged, miConflicting, miAlready, miDirty):
 	for i,item in enumerate(miMerged):
 		mvFile.write(item+"\n")
 	pass
-	mvFile.write("\n")
-	mvFile.write("Conflicting:\n")
-	for i,item in enumerate(miConflicting):
-		mvFile.write(item+"\n")
+	if not len(miConflicting)==0:
+		mvFile.write("\n")
+		mvFile.write("Conflicting:\n")
+		for i,item in enumerate(miConflicting):
+			mvFile.write(item+"\n")
+		pass
 	pass
 	mvFile.write("\n")
 	mvFile.write("Already up-to-date:\n")
