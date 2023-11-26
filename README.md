@@ -18,7 +18,7 @@ manifest file.
 IT CANNOT FIX CONFLICTS FOR YOU!
 
 # Usage:
-Just start the Security_Patch_Merge_Helper.py file using:
+Just start the SPMHelper.py file using:
 ```bash
-python Security_Patch_Merge_Helper.py
+python SPMHelper.py
 ```
