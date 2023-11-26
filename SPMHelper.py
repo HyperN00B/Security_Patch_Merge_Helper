@@ -21,6 +21,9 @@ def mGetSourceRoot():
 	os.system("clear")
 	print("Please enter the path to the source root!")
 	mrSourceRootPath=input("Drag&dropping the folder also works 😉\nHere:")
+	if "\'" or "'" in mrSourceRootPath:
+	    mrSourceRootPath=mrSourceRootPath[1:-1]
+	pass
 	if os.path.isdir(mrSourceRootPath) and "build" in os.listdir(mrSourceRootPath) and "vendor" in os.listdir(mrSourceRootPath):
 		if not mrSourceRootPath.endswith("/"):
 			mrSourceRootPath=mrSourceRootPath+"/"
